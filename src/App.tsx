@@ -18,6 +18,7 @@ import LearnCryptoPage from "./pages/LearnCryptoPage";
 import MarketDataPage from "./pages/MarketDataPage";
 import ExchangesPage from "./pages/ExchangesPage";
 import PortfolioTrackerPage from "./pages/PortfolioTrackerPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/market-data" element={<MarketDataPage />} />
             <Route path="/exchanges" element={<ExchangesPage />} />
             <Route path="/portfolio-tracker" element={<PortfolioTrackerPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
