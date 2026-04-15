@@ -6,6 +6,7 @@ import { TrendingSidebar, MarketOverview } from "@/components/Sidebar";
 import { EditorsPicks } from "@/components/EditorsPicks";
 import { Footer } from "@/components/Footer";
 import { AdBanner } from "@/components/AdBanner";
+import { SEO } from "@/components/SEO";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useCryptoNews } from "@/hooks/useCryptoNews";
 
@@ -20,11 +21,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO />
       <PriceTicker prices={prices} loading={pricesLoading} />
       <Header />
-
       <HeroSection articles={heroArticles} loading={newsLoading} />
-
       <section className="container mx-auto px-4 lg:px-8 pb-10">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
           <LatestNews articles={latestArticles} loading={newsLoading} />
@@ -35,7 +35,6 @@ const Index = () => {
           </aside>
         </div>
       </section>
-
       <EditorsPicks articles={editorPicks} loading={newsLoading} />
       <Footer />
     </div>
