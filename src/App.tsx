@@ -45,6 +45,7 @@ const App = () => (
             <Route path="/market-data" element={<MarketDataPage />} />
             <Route path="/exchanges" element={<ExchangesPage />} />
             <Route path="/portfolio-tracker" element={<PortfolioTrackerPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
