@@ -5,6 +5,7 @@ import { AdBanner } from "@/components/AdBanner";
 import { PriceTicker } from "@/components/PriceTicker";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 
 function timeAgo(dateStr: string) {
@@ -53,6 +54,13 @@ export default function ArticleDetail() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={article.title}
+        description={article.description || article.title}
+        image={featureImage}
+        url={`/article/${id}`}
+        type="article"
+      />
       <PriceTicker prices={prices} loading={pricesLoading} />
       <Header />
 

@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PriceTicker } from "@/components/PriceTicker";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { SEO } from "@/components/SEO";
 import { Rocket, Bell } from "lucide-react";
 import { useState } from "react";
 
@@ -12,6 +13,7 @@ export default function PortfolioTrackerPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Portfolio Tracker" description="Track your crypto holdings with real-time P&L, alerts, and performance analytics — coming soon." url="/portfolio-tracker" />
       <PriceTicker prices={prices} loading={loading} />
       <Header />
       <div className="container mx-auto px-4 lg:px-8 py-20 max-w-2xl text-center">

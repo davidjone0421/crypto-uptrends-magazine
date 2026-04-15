@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PriceTicker } from "@/components/PriceTicker";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { SEO } from "@/components/SEO";
 import { Mail, MapPin, Clock } from "lucide-react";
 import { useState } from "react";
 
@@ -11,6 +12,7 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Contact Us" description="Get in touch with the Crypto UpTrends team." url="/contact" />
       <PriceTicker prices={prices} loading={loading} />
       <Header />
       <div className="container mx-auto px-4 lg:px-8 py-12 max-w-5xl">
