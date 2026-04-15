@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PriceTicker } from "@/components/PriceTicker";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { SEO } from "@/components/SEO";
 import { Briefcase, MapPin, Clock } from "lucide-react";
 
 const jobs = [
@@ -15,6 +16,7 @@ export default function CareersPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Careers" description="Join the Crypto UpTrends team — explore open positions in crypto journalism and development." url="/careers" />
       <PriceTicker prices={prices} loading={loading} />
       <Header />
       <div className="container mx-auto px-4 lg:px-8 py-12 max-w-4xl">

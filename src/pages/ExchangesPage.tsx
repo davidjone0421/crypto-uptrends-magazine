@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PriceTicker } from "@/components/PriceTicker";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { SEO } from "@/components/SEO";
 import { ExternalLink } from "lucide-react";
 
 const exchanges = [
@@ -16,6 +17,7 @@ export default function ExchangesPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Top Crypto Exchanges" description="Compare leading cryptocurrency exchanges — Binance, Coinbase, Kraken, and Bybit." url="/exchanges" />
       <PriceTicker prices={prices} loading={loading} />
       <Header />
       <div className="container mx-auto px-4 lg:px-8 py-12 max-w-5xl">

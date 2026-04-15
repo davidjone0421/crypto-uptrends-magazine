@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PriceTicker } from "@/components/PriceTicker";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { SEO } from "@/components/SEO";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TrendingUp, TrendingDown } from "lucide-react";
 
@@ -13,6 +14,7 @@ export default function MarketDataPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Market Data" description="Live cryptocurrency prices, 24h changes, and market caps for the top 20 coins." url="/market-data" />
       <PriceTicker prices={prices} loading={loading} />
       <Header />
       <div className="container mx-auto px-4 lg:px-8 py-12">

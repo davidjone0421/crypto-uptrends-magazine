@@ -7,6 +7,7 @@ import { PriceTicker } from "@/components/PriceTicker";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AdBanner } from "@/components/AdBanner";
+import { SEO } from "@/components/SEO";
 
 const categoryMap: Record<string, string> = {
   "crypto-news": "Crypto News",
@@ -52,6 +53,7 @@ export default function CategoryPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title={`${categoryLabel} News`} description={`Browse the latest ${categoryLabel.toLowerCase()} articles and updates.`} url={`/category/${name}`} />
       <PriceTicker prices={prices} loading={pricesLoading} />
       <Header />
 
