@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { PriceTicker } from "@/components/PriceTicker";
 import { Header } from "@/components/Header";
 import { HeroSection } from "@/components/HeroSection";
@@ -6,19 +5,14 @@ import { LatestNews } from "@/components/LatestNews";
 import { TrendingSidebar, MarketOverview } from "@/components/Sidebar";
 import { EditorsPicks } from "@/components/EditorsPicks";
 import { Footer } from "@/components/Footer";
+import { AdBanner } from "@/components/AdBanner";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useCryptoNews } from "@/hooks/useCryptoNews";
 
 const Index = () => {
-  const [darkMode, setDarkMode] = useState(false);
   const { prices, loading: pricesLoading } = useCryptoPrices(20);
   const { articles, loading: newsLoading } = useCryptoNews();
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", darkMode);
-  }, [darkMode]);
-
-  // Split articles for different sections
   const heroArticles = articles.slice(0, 4);
   const latestArticles = articles.slice(4, 12);
   const trendingArticles = [...articles].sort(() => 0.5 - Math.random()).slice(0, 6);
@@ -27,15 +21,15 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <PriceTicker prices={prices} loading={pricesLoading} />
-      <Header darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />
+      <Header />
 
       <HeroSection articles={heroArticles} loading={newsLoading} />
 
-      {/* Main Content + Sidebar */}
       <section className="container mx-auto px-4 lg:px-8 pb-10">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
           <LatestNews articles={latestArticles} loading={newsLoading} />
-          <aside>
+          <aside className="space-y-5">
+            <AdBanner width={300} height={250} />
             <TrendingSidebar articles={trendingArticles} />
             <MarketOverview prices={prices} loading={pricesLoading} />
           </aside>

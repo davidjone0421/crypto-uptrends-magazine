@@ -20,4 +20,6 @@ export interface NewsArticle {
   published_at: string;
   source: string;
   category: string;
+  author?: string;
+  body?: string;
 }

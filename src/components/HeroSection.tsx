@@ -1,5 +1,6 @@
 import type { NewsArticle } from "@/types/crypto";
 import { Clock } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface Props {
   articles: NewsArticle[];
@@ -36,17 +37,15 @@ export function HeroSection({ articles, loading }: Props) {
   return (
     <section className="container mx-auto px-4 lg:px-8 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Main Featured */}
         {featured && (
-          <a
-            href={featured.url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to={`/article/${featured.id}`}
             className="lg:col-span-2 relative rounded-xl overflow-hidden group min-h-[320px] lg:min-h-[420px] flex items-end"
           >
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-              style={{ backgroundImage: `url(${featured.image_url || "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&q=80"})` }}
+            <img
+              src={featured.image_url || "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&q=80"}
+              alt={featured.title}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
             <div className="relative p-6 lg:p-8 text-white">
@@ -64,22 +63,20 @@ export function HeroSection({ articles, loading }: Props) {
                 </span>
               </div>
             </div>
-          </a>
+          </Link>
         )}
 
-        {/* Side Cards */}
         <div className="flex flex-col gap-4">
           {side.map((article) => (
-            <a
+            <Link
               key={article.id}
-              href={article.url}
-              target="_blank"
-              rel="noopener noreferrer"
+              to={`/article/${article.id}`}
               className="relative rounded-xl overflow-hidden group flex-1 min-h-[120px] flex items-end"
             >
-              <div
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                style={{ backgroundImage: `url(${article.image_url || "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&q=80"})` }}
+              <img
+                src={article.image_url || "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&q=80"}
+                alt={article.title}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="relative p-4 text-white">
@@ -88,7 +85,7 @@ export function HeroSection({ articles, loading }: Props) {
                 </h3>
                 <span className="text-xs text-white/60 mt-1 block">{article.source}</span>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

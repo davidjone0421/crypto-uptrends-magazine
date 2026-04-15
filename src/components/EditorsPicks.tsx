@@ -1,5 +1,6 @@
 import type { NewsArticle } from "@/types/crypto";
 import { Clock, Star } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface Props {
   articles: NewsArticle[];
@@ -36,16 +37,15 @@ export function EditorsPicks({ articles, loading }: Props) {
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {articles.map((article) => (
-          <a
+          <Link
             key={article.id}
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            to={`/article/${article.id}`}
             className="bg-card rounded-xl overflow-hidden border hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
           >
-            <div
-              className="h-40 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-              style={{ backgroundImage: `url(${article.image_url || "https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=400&q=80"})` }}
+            <img
+              src={article.image_url || "https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=400&q=80"}
+              alt={article.title}
+              className="w-full h-40 object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className="p-4">
               <span className="text-xs font-medium text-primary">{article.category}</span>
@@ -61,7 +61,7 @@ export function EditorsPicks({ articles, loading }: Props) {
                 </span>
               </div>
             </div>
-          </a>
+          </Link>
         ))}
       </div>
     </section>
