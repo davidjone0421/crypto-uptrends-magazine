@@ -13,7 +13,7 @@ const categoryMap: Record<string, string> = {
   "bitcoin-news": "Bitcoin",
   "ai-web3": "Web3",
   "altcoin-updates": "Altcoins",
-  "price-predictions": "Market Analysis",
+  "market-analysis": "Market Analysis",
 };
 
 const filters = ["All", "Latest", "Bullish", "Bearish"];
