@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import {
@@ -6,18 +5,14 @@ import {
   FileText, Eye, Clock, Check, X, Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCryptoNews } from "@/hooks/useCryptoNews";
-import { useLocalArticles } from "@/hooks/useLocalArticles";
+import { useSupabaseArticles } from "@/hooks/useSupabaseArticles";
+import { ImageUploader } from "@/components/ImageUploader";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
 type View = "dashboard" | "create" | "approvals";
@@ -25,8 +20,7 @@ type View = "dashboard" | "create" | "approvals";
 export default function AdminDashboard() {
   const { isAuthenticated, user, logout } = useAuth();
   const [view, setView] = useState<View>("dashboard");
-  const { articles } = useCryptoNews();
-  const { addArticle } = useLocalArticles();
+  const { articles, insertArticle } = useSupabaseArticles();
   const navigate = useNavigate();
   const [approvalStatus, setApprovalStatus] = useState<Record<string, "approved" | "rejected">>({});
 
@@ -38,70 +32,42 @@ export default function AdminDashboard() {
     { label: "Pending Approvals", icon: FileCheck, view: "approvals" },
   ];
 
-  const pendingArticles = articles.slice(0, 8);
-
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
       <aside className="w-64 bg-card border-r border-border flex flex-col shrink-0">
         <div className="p-5 border-b border-border">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-6 h-6 text-primary" />
-            <span className="font-heading text-lg font-bold">
-              Crypto <span className="text-primary">UpTrends</span>
-            </span>
+            <span className="font-heading text-lg font-bold">Crypto <span className="text-primary">UpTrends</span></span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">Admin Panel</p>
         </div>
-
         <nav className="flex-1 p-3 space-y-1">
           {sidebarItems.map((item) => (
-            <button
-              key={item.view}
-              onClick={() => setView(item.view)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                view === item.view
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
+            <button key={item.view} onClick={() => setView(item.view)} className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${view === item.view ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+              <item.icon className="w-4 h-4" />{item.label}
             </button>
           ))}
         </nav>
-
         <div className="p-3 border-t border-border">
-          <div className="text-xs text-muted-foreground mb-2 px-3">
-            {user?.name} ({user?.role})
-          </div>
-          <button
-            onClick={() => { logout(); navigate("/admin-login"); }}
-            className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign Out
+          <div className="text-xs text-muted-foreground mb-2 px-3">{user?.name} ({user?.role})</div>
+          <button onClick={() => { logout(); navigate("/admin-login"); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
+            <LogOut className="w-4 h-4" />Sign Out
           </button>
         </div>
       </aside>
 
-      {/* Main */}
       <main className="flex-1 p-8 overflow-auto">
         {view === "dashboard" && <DashboardView articleCount={articles.length} />}
-        {view === "create" && <CreatePostView onPublish={addArticle} />}
+        {view === "create" && <CreatePostView onPublish={insertArticle} />}
         {view === "approvals" && (
-          <ApprovalsView
-            articles={pendingArticles}
-            status={approvalStatus}
-            onAction={(id, action) => setApprovalStatus((prev) => ({ ...prev, [id]: action }))}
-          />
+          <ApprovalsView articles={articles.slice(0, 8)} status={approvalStatus} onAction={(id, action) => setApprovalStatus((prev) => ({ ...prev, [id]: action }))} />
         )}
       </main>
     </div>
   );
 }
 
-/* ──── Dashboard Overview ──── */
 function DashboardView({ articleCount }: { articleCount: number }) {
   const stats = [
     { label: "Total Articles", value: articleCount, icon: FileText, color: "text-primary" },
@@ -128,33 +94,38 @@ function DashboardView({ articleCount }: { articleCount: number }) {
   );
 }
 
-/* ──── Create Post ──── */
 const categories = ["Bitcoin", "Altcoins", "Web3", "Market Analysis"];
 
-function CreatePostView({ onPublish }: { onPublish: (a: any) => void }) {
+function CreatePostView({ onPublish }: { onPublish: (a: any) => Promise<any> }) {
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [category, setCategory] = useState("");
   const [content, setContent] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [featureImage, setFeatureImage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !category) {
       toast.error("Title and Category are required.");
       return;
     }
-    onPublish({
-      title,
-      description: excerpt || title,
-      category,
-      body: content,
-      image_url: imageUrl || "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&q=80",
-      source: "Crypto UpTrends",
-      author: "Admin",
-    });
-    toast.success("Article published successfully!");
-    setTitle(""); setExcerpt(""); setCategory(""); setContent(""); setImageUrl("");
+    setSubmitting(true);
+    try {
+      await onPublish({
+        title,
+        excerpt: excerpt || title,
+        category,
+        content,
+        feature_image: featureImage || "",
+      });
+      toast.success("Article published to database!");
+      setTitle(""); setExcerpt(""); setCategory(""); setContent(""); setFeatureImage("");
+    } catch (err: any) {
+      toast.error("Failed to publish: " + (err.message || "Unknown error"));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -174,41 +145,27 @@ function CreatePostView({ onPublish }: { onPublish: (a: any) => void }) {
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
             <SelectContent>
-              {categories.map((c) => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
-              ))}
+              {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium">Feature Image URL</label>
-          <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://images.unsplash.com/..." />
-          {imageUrl && (
-            <img src={imageUrl} alt="Preview" className="mt-2 h-40 w-full object-cover rounded-lg border border-border" />
-          )}
+          <label className="text-sm font-medium">Feature Image *</label>
+          <ImageUploader value={featureImage} onChange={setFeatureImage} />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium">Content</label>
           <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write article content..." rows={8} />
         </div>
-        <Button type="submit" className="w-full sm:w-auto">
-          <FilePlus className="w-4 h-4 mr-2" /> Publish Article
+        <Button type="submit" className="w-full sm:w-auto" disabled={submitting}>
+          <FilePlus className="w-4 h-4 mr-2" /> {submitting ? "Publishing..." : "Publish Article"}
         </Button>
       </form>
     </div>
   );
 }
 
-/* ──── Approvals ──── */
-function ApprovalsView({
-  articles,
-  status,
-  onAction,
-}: {
-  articles: any[];
-  status: Record<string, "approved" | "rejected">;
-  onAction: (id: string, action: "approved" | "rejected") => void;
-}) {
+function ApprovalsView({ articles, status, onAction }: { articles: any[]; status: Record<string, "approved" | "rejected">; onAction: (id: string, action: "approved" | "rejected") => void }) {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Pending Approvals</h1>
@@ -219,7 +176,7 @@ function ApprovalsView({
               <tr className="border-b border-border bg-secondary/50">
                 <th className="text-left px-4 py-3 font-semibold">Image</th>
                 <th className="text-left px-4 py-3 font-semibold">Title</th>
-                <th className="text-left px-4 py-3 font-semibold">Source</th>
+                <th className="text-left px-4 py-3 font-semibold">Category</th>
                 <th className="text-left px-4 py-3 font-semibold">Date</th>
                 <th className="text-left px-4 py-3 font-semibold">Status</th>
                 <th className="text-left px-4 py-3 font-semibold">Actions</th>
@@ -229,21 +186,16 @@ function ApprovalsView({
               {articles.map((a) => (
                 <tr key={a.id} className="border-b border-border hover:bg-secondary/30 transition-colors">
                   <td className="px-4 py-3">
-                    <img
-                      src={a.image_url || "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=100&q=60"}
-                      alt="" className="w-12 h-9 rounded object-cover"
-                    />
+                    <img src={a.image_url || "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=100&q=60"} alt="" className="w-12 h-9 rounded object-cover" />
                   </td>
                   <td className="px-4 py-3 max-w-xs"><span className="line-clamp-1 font-medium">{a.title}</span></td>
-                  <td className="px-4 py-3 text-muted-foreground">{a.source}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{a.category}</td>
                   <td className="px-4 py-3 text-muted-foreground text-xs">{new Date(a.published_at).toLocaleDateString()}</td>
                   <td className="px-4 py-3">
                     {status[a.id] ? (
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                        status[a.id] === "approved"
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                      }`}>{status[a.id] === "approved" ? "Approved" : "Rejected"}</span>
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${status[a.id] === "approved" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}>
+                        {status[a.id] === "approved" ? "Approved" : "Rejected"}
+                      </span>
                     ) : (
                       <span className="text-xs font-semibold px-2 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</span>
                     )}
@@ -251,12 +203,8 @@ function ApprovalsView({
                   <td className="px-4 py-3">
                     {!status[a.id] && (
                       <div className="flex items-center gap-2">
-                        <button onClick={() => onAction(a.id, "approved")} className="p-1.5 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 transition-colors">
-                          <Check className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => onAction(a.id, "rejected")} className="p-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
+                        <button onClick={() => onAction(a.id, "approved")} className="p-1.5 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 transition-colors"><Check className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => onAction(a.id, "rejected")} className="p-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"><X className="w-3.5 h-3.5" /></button>
                       </div>
                     )}
                   </td>
