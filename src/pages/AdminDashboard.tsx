@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+
 import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import {
@@ -138,42 +138,12 @@ function CreatePostView({ onPublish }: { onPublish: (a: any) => void }) {
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-
-  // 1. Check if required fields are filled
-  if (!title || !category) {
-    toast.error("Title and Category are required.");
-    return;
-  }
-
-  try {
-    // 2. Save data to Supabase Engine
-    const { data, error } = await supabase
-      .from('articles')
-      .insert([
-        {
-          title: title,
-          category: category,
-          content: content,       // Agar aapke variable ka naam 'content' hai
-          excerpt: excerpt,       // Agar excerpt ka variable maujood hai
-          feature_image: image    // Base64 image variable (check karein aapke paas 'image' hai ya kuch aur)
-        }
-      ]);
-
-    // 3. Success or Error Message
-    if (error) {
-      console.error("Supabase Error:", error);
-      toast.error("Database mein save nahi ho saka: " + error.message);
-    } else {
-      toast.success("Zabardast! Article Supabase mein save ho gaya.");
-      // Optional: Yahan aap chahein toh form ko khali karne ka code rakh sakte hain (e.g., setTitle(''))
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !category) {
+      toast.error("Title and Category are required.");
+      return;
     }
-  } catch (err) {
-    console.error("System Error:", err);
-    toast.error("System mein koi masla hai.");
-  }
-};
     onPublish({
       title,
       description: excerpt || title,
