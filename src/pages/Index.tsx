@@ -8,15 +8,11 @@ import { Footer } from "@/components/Footer";
 import { AdBanner } from "@/components/AdBanner";
 import { SEO } from "@/components/SEO";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
-import { useCryptoNews } from "@/hooks/useCryptoNews";
-import { useLocalArticles } from "@/hooks/useLocalArticles";
+import { useSupabaseArticles } from "@/hooks/useSupabaseArticles";
 
 const Index = () => {
   const { prices, loading: pricesLoading } = useCryptoPrices(20);
-  const { articles: apiArticles, loading: newsLoading } = useCryptoNews();
-  const { localArticles } = useLocalArticles();
-
-  const articles = [...localArticles, ...apiArticles];
+  const { articles, loading: newsLoading } = useSupabaseArticles();
 
   const heroArticles = articles.slice(0, 4);
   const latestArticles = articles.slice(4, 12);
