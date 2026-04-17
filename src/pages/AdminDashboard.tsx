@@ -18,12 +18,15 @@ import {
 type View = "dashboard" | "create" | "approvals";
 
 export default function AdminDashboard() {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, isReady, user, logout } = useAuth();
   const [view, setView] = useState<View>("dashboard");
-  const { articles, insertArticle } = useSupabaseArticles();
+  const { articles, insertArticle, error: articlesError, loading } = useSupabaseArticles();
   const navigate = useNavigate();
   const [approvalStatus, setApprovalStatus] = useState<Record<string, "approved" | "rejected">>({});
 
+  if (!isReady) {
+    return <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">Loading...</div>;
+  }
   if (!isAuthenticated) return <Navigate to="/admin-login" replace />;
 
   const sidebarItems: { label: string; icon: typeof LayoutDashboard; view: View }[] = [
@@ -50,16 +53,28 @@ export default function AdminDashboard() {
           ))}
         </nav>
         <div className="p-3 border-t border-border">
-          <div className="text-xs text-muted-foreground mb-2 px-3">{user?.name} ({user?.role})</div>
-          <button onClick={() => { logout(); navigate("/admin-login"); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
+          <div className="text-xs text-muted-foreground mb-2 px-3 truncate">
+            {user?.email} {isAdmin ? "(Admin)" : "(User)"}
+          </div>
+          <button onClick={async () => { await logout(); navigate("/admin-login"); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
             <LogOut className="w-4 h-4" />Sign Out
           </button>
         </div>
       </aside>
 
       <main className="flex-1 p-8 overflow-auto">
-        {view === "dashboard" && <DashboardView articleCount={articles.length} />}
-        {view === "create" && <CreatePostView onPublish={insertArticle} />}
+        {!isAdmin && (
+          <div className="mb-6 p-4 rounded-lg bg-amber-100 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-sm">
+            <strong>Read-only:</strong> your account does not have the <code>admin</code> role. Publishing will be blocked by RLS. Grant yourself admin in Supabase: <code>insert into user_roles (user_id, role) values ('{user?.id}', 'admin');</code>
+          </div>
+        )}
+        {articlesError && (
+          <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+            <strong>Database error:</strong> {articlesError}
+          </div>
+        )}
+        {view === "dashboard" && <DashboardView articleCount={articles.length} loading={loading} />}
+        {view === "create" && <CreatePostView onPublish={insertArticle} disabled={!isAdmin} />}
         {view === "approvals" && (
           <ApprovalsView articles={articles.slice(0, 8)} status={approvalStatus} onAction={(id, action) => setApprovalStatus((prev) => ({ ...prev, [id]: action }))} />
         )}
