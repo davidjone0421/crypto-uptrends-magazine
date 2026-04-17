@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { NewsArticle } from "@/types/crypto";
 
 interface SupabaseArticle {
@@ -34,6 +34,11 @@ export function useSupabaseArticles() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchArticles = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      setError("Supabase env vars missing. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env, then restart.");
+      return;
+    }
     try {
       setLoading(true);
       const { data, error: dbError } = await supabase
