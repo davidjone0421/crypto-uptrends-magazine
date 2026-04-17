@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import {
   LayoutDashboard, FilePlus, FileCheck, LogOut, TrendingUp,
-  FileText, Eye, Clock, Check, X, Users,
+  FileText, Eye, Clock, Check, X, Users, Settings,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSupabaseArticles } from "@/hooks/useSupabaseArticles";
 import { ImageUploader } from "@/components/ImageUploader";
+import { ManagePostsView } from "@/components/admin/ManagePostsView";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,12 +16,12 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-type View = "dashboard" | "create" | "approvals";
+type View = "dashboard" | "create" | "manage" | "approvals";
 
 export default function AdminDashboard() {
   const { isAuthenticated, isAdmin, isReady, user, logout } = useAuth();
   const [view, setView] = useState<View>("dashboard");
-  const { articles, insertArticle, error: articlesError, loading } = useSupabaseArticles();
+  const { articles, insertArticle, updateArticle, deleteArticle, error: articlesError, loading } = useSupabaseArticles();
   const navigate = useNavigate();
   const [approvalStatus, setApprovalStatus] = useState<Record<string, "approved" | "rejected">>({});
 
@@ -32,6 +33,7 @@ export default function AdminDashboard() {
   const sidebarItems: { label: string; icon: typeof LayoutDashboard; view: View }[] = [
     { label: "Dashboard Overview", icon: LayoutDashboard, view: "dashboard" },
     { label: "Create Post", icon: FilePlus, view: "create" },
+    { label: "Manage Posts", icon: Settings, view: "manage" },
     { label: "Pending Approvals", icon: FileCheck, view: "approvals" },
   ];
 
@@ -75,6 +77,15 @@ export default function AdminDashboard() {
         )}
         {view === "dashboard" && <DashboardView articleCount={articles.length} loading={loading} />}
         {view === "create" && <CreatePostView onPublish={insertArticle} disabled={!isAdmin} />}
+        {view === "manage" && (
+          <ManagePostsView
+            articles={articles}
+            loading={loading}
+            isAdmin={isAdmin}
+            onUpdate={updateArticle}
+            onDelete={deleteArticle}
+          />
+        )}
         {view === "approvals" && (
           <ApprovalsView articles={articles.slice(0, 8)} status={approvalStatus} onAction={(id, action) => setApprovalStatus((prev) => ({ ...prev, [id]: action }))} />
         )}

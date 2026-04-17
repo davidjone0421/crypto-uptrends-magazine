@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Search, ChevronDown, TrendingUp, X } from "lucide-react";
+import { Search, ChevronDown, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { AdBanner } from "./AdBanner";
+import logo from "@/assets/logo.png";
 
 const navLinks = [
   { label: "HOME", href: "/", active: true },
@@ -21,8 +22,14 @@ export function Header() {
       {/* Top Row: Logo + Ad */}
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between py-3 gap-4">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <TrendingUp className="w-8 h-8 text-primary" />
+          <Link to="/" className="flex items-center gap-2.5 shrink-0">
+            <img
+              src={logo}
+              alt="Crypto UpTrends logo"
+              width={40}
+              height={40}
+              className="w-10 h-10 object-contain"
+            />
             <span className="font-heading text-2xl font-bold tracking-tight">
               Crypto <span className="text-primary">UpTrends</span>
             </span>
