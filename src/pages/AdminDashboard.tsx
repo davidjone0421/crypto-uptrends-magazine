@@ -77,6 +77,15 @@ export default function AdminDashboard() {
         )}
         {view === "dashboard" && <DashboardView articleCount={articles.length} loading={loading} />}
         {view === "create" && <CreatePostView onPublish={insertArticle} disabled={!isAdmin} />}
+        {view === "manage" && (
+          <ManagePostsView
+            articles={articles}
+            loading={loading}
+            isAdmin={isAdmin}
+            onUpdate={updateArticle}
+            onDelete={deleteArticle}
+          />
+        )}
         {view === "approvals" && (
           <ApprovalsView articles={articles.slice(0, 8)} status={approvalStatus} onAction={(id, action) => setApprovalStatus((prev) => ({ ...prev, [id]: action }))} />
         )}
