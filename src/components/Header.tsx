@@ -9,7 +9,7 @@ const navLinks = [
   { label: "BITCOIN NEWS", href: "/category/bitcoin-news" },
   { label: "AI & WEB3", href: "/category/ai-web3" },
   { label: "ALTCOIN UPDATES", href: "/category/altcoin-updates", dropdown: true },
-  { label: "MARKET ANALYSIS", href: "/category/market-analysis", dropdown: true },
+  { label: "PRICE PREDICTIONS", href: "/category/price-predictions", dropdown: true },
 ];
 
 export function Header() {
