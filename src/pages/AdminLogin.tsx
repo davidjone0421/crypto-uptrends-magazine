@@ -1,23 +1,35 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { TrendingUp, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export default function AdminLogin() {
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const { login, signUp, isAuthenticated, isReady } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  if (isReady && isAuthenticated) return <Navigate to="/admin" replace />;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const success = login(email, password);
-    if (success) {
-      navigate("/admin");
+    setLoading(true);
+    const { error: authError } = mode === "login"
+      ? await login(email, password)
+      : await signUp(email, password);
+    setLoading(false);
+    if (authError) {
+      setError(authError);
+    } else if (mode === "signup") {
+      toast.success("Account created. Check your email to confirm (if confirmation is enabled), then sign in.");
+      setMode("login");
     } else {
-      setError("Invalid email or password.");
+      navigate("/admin");
     }
   };
 
@@ -37,7 +49,7 @@ export default function AdminLogin() {
         <div className="bg-card rounded-xl border p-8 shadow-lg">
           <div className="flex items-center gap-2 mb-6">
             <Lock className="w-5 h-5 text-primary" />
-            <h1 className="text-lg font-bold">Admin Login</h1>
+            <h1 className="text-lg font-bold">{mode === "login" ? "Admin Login" : "Create Admin Account"}</h1>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -59,6 +71,7 @@ export default function AdminLogin() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
                 className="w-full px-3 py-2.5 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="••••••••"
               />
@@ -66,9 +79,17 @@ export default function AdminLogin() {
             {error && <p className="text-xs text-destructive">{error}</p>}
             <button
               type="submit"
-              className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+              disabled={loading}
+              className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              Sign In
+              {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); }}
+              className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {mode === "login" ? "Need an account? Sign up" : "Have an account? Sign in"}
             </button>
           </form>
         </div>

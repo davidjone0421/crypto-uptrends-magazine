@@ -18,12 +18,15 @@ import {
 type View = "dashboard" | "create" | "approvals";
 
 export default function AdminDashboard() {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, isReady, user, logout } = useAuth();
   const [view, setView] = useState<View>("dashboard");
-  const { articles, insertArticle } = useSupabaseArticles();
+  const { articles, insertArticle, error: articlesError, loading } = useSupabaseArticles();
   const navigate = useNavigate();
   const [approvalStatus, setApprovalStatus] = useState<Record<string, "approved" | "rejected">>({});
 
+  if (!isReady) {
+    return <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">Loading...</div>;
+  }
   if (!isAuthenticated) return <Navigate to="/admin-login" replace />;
 
   const sidebarItems: { label: string; icon: typeof LayoutDashboard; view: View }[] = [
@@ -50,16 +53,28 @@ export default function AdminDashboard() {
           ))}
         </nav>
         <div className="p-3 border-t border-border">
-          <div className="text-xs text-muted-foreground mb-2 px-3">{user?.name} ({user?.role})</div>
-          <button onClick={() => { logout(); navigate("/admin-login"); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
+          <div className="text-xs text-muted-foreground mb-2 px-3 truncate">
+            {user?.email} {isAdmin ? "(Admin)" : "(User)"}
+          </div>
+          <button onClick={async () => { await logout(); navigate("/admin-login"); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
             <LogOut className="w-4 h-4" />Sign Out
           </button>
         </div>
       </aside>
 
       <main className="flex-1 p-8 overflow-auto">
-        {view === "dashboard" && <DashboardView articleCount={articles.length} />}
-        {view === "create" && <CreatePostView onPublish={insertArticle} />}
+        {!isAdmin && (
+          <div className="mb-6 p-4 rounded-lg bg-amber-100 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-sm">
+            <strong>Read-only:</strong> your account does not have the <code>admin</code> role. Publishing will be blocked by RLS. Grant yourself admin in Supabase: <code>insert into user_roles (user_id, role) values ('{user?.id}', 'admin');</code>
+          </div>
+        )}
+        {articlesError && (
+          <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+            <strong>Database error:</strong> {articlesError}
+          </div>
+        )}
+        {view === "dashboard" && <DashboardView articleCount={articles.length} loading={loading} />}
+        {view === "create" && <CreatePostView onPublish={insertArticle} disabled={!isAdmin} />}
         {view === "approvals" && (
           <ApprovalsView articles={articles.slice(0, 8)} status={approvalStatus} onAction={(id, action) => setApprovalStatus((prev) => ({ ...prev, [id]: action }))} />
         )}
@@ -68,9 +83,9 @@ export default function AdminDashboard() {
   );
 }
 
-function DashboardView({ articleCount }: { articleCount: number }) {
+function DashboardView({ articleCount, loading }: { articleCount: number; loading?: boolean }) {
   const stats = [
-    { label: "Total Articles", value: articleCount, icon: FileText, color: "text-primary" },
+    { label: "Total Articles", value: loading ? "…" : articleCount, icon: FileText, color: "text-primary" },
     { label: "Pending Drafts", value: 8, icon: Clock, color: "text-amber-500" },
     { label: "Total Views", value: "24.5K", icon: Eye, color: "text-emerald-500" },
     { label: "Active Users", value: "1.2K", icon: Users, color: "text-sky-500" },
@@ -96,7 +111,7 @@ function DashboardView({ articleCount }: { articleCount: number }) {
 
 const categories = ["Bitcoin", "Altcoins", "Web3", "Market Analysis"];
 
-function CreatePostView({ onPublish }: { onPublish: (a: any) => Promise<any> }) {
+function CreatePostView({ onPublish, disabled }: { onPublish: (a: any) => Promise<any>; disabled?: boolean }) {
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [category, setCategory] = useState("");
@@ -157,8 +172,8 @@ function CreatePostView({ onPublish }: { onPublish: (a: any) => Promise<any> }) 
           <label className="text-sm font-medium">Content</label>
           <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write article content..." rows={8} />
         </div>
-        <Button type="submit" className="w-full sm:w-auto" disabled={submitting}>
-          <FilePlus className="w-4 h-4 mr-2" /> {submitting ? "Publishing..." : "Publish Article"}
+        <Button type="submit" className="w-full sm:w-auto" disabled={submitting || disabled}>
+          <FilePlus className="w-4 h-4 mr-2" /> {submitting ? "Publishing..." : disabled ? "Admin role required" : "Publish Article"}
         </Button>
       </form>
     </div>

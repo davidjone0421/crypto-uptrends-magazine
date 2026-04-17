@@ -1,46 +1,84 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import type { Session, User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 
 interface AuthState {
+  isReady: boolean;
   isAuthenticated: boolean;
-  user: { email: string; name: string; role: string } | null;
-  login: (email: string, password: string) => boolean;
-  logout: () => void;
+  isAdmin: boolean;
+  user: User | null;
+  session: Session | null;
+  login: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
 
-// TODO: Replace with Supabase Auth
-const MOCK_CREDENTIALS = {
-  email: "davidjone0421@gmail.com",
-  password: "Tahir@300",
-  name: "David Jone",
-  role: "Owner",
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthState["user"]>(() => {
-    const saved = localStorage.getItem("admin_user");
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
-  const login = (email: string, password: string): boolean => {
-    // TODO: Replace with supabase.auth.signInWithPassword()
-    if (email === MOCK_CREDENTIALS.email && password === MOCK_CREDENTIALS.password) {
-      const u = { email, name: MOCK_CREDENTIALS.name, role: MOCK_CREDENTIALS.role };
-      setUser(u);
-      localStorage.setItem("admin_user", JSON.stringify(u));
-      return true;
+  useEffect(() => {
+    // Subscribe FIRST so we never miss an event
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+      // Defer role check to avoid deadlock inside auth callback
+      if (newSession?.user) {
+        setTimeout(() => { void checkAdmin(newSession.user.id); }, 0);
+      } else {
+        setIsAdmin(false);
+      }
+    });
+
+    // Then hydrate from storage
+    supabase.auth.getSession().then(({ data: { session: existing } }) => {
+      setSession(existing);
+      setUser(existing?.user ?? null);
+      if (existing?.user) {
+        void checkAdmin(existing.user.id).finally(() => setIsReady(true));
+      } else {
+        setIsReady(true);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const checkAdmin = async (userId: string) => {
+    try {
+      const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+      if (error) throw error;
+      setIsAdmin(!!data);
+    } catch (err) {
+      console.error("Role check failed:", err);
+      setIsAdmin(false);
     }
-    return false;
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("admin_user");
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error?.message ?? null };
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/admin` },
+    });
+    return { error: error?.message ?? null };
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!user, user, login, logout }}>
+    <AuthContext.Provider value={{ isReady, isAuthenticated: !!user, isAdmin, user, session, login, signUp, logout }}>
       {children}
     </AuthContext.Provider>
   );
