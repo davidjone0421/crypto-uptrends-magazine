@@ -21,7 +21,7 @@ type View = "dashboard" | "create" | "manage" | "approvals";
 export default function AdminDashboard() {
   const { isAuthenticated, isAdmin, isReady, user, logout } = useAuth();
   const [view, setView] = useState<View>("dashboard");
-  const { articles, insertArticle, error: articlesError, loading } = useSupabaseArticles();
+  const { articles, insertArticle, updateArticle, deleteArticle, error: articlesError, loading } = useSupabaseArticles();
   const navigate = useNavigate();
   const [approvalStatus, setApprovalStatus] = useState<Record<string, "approved" | "rejected">>({});
 
@@ -33,6 +33,7 @@ export default function AdminDashboard() {
   const sidebarItems: { label: string; icon: typeof LayoutDashboard; view: View }[] = [
     { label: "Dashboard Overview", icon: LayoutDashboard, view: "dashboard" },
     { label: "Create Post", icon: FilePlus, view: "create" },
+    { label: "Manage Posts", icon: Settings, view: "manage" },
     { label: "Pending Approvals", icon: FileCheck, view: "approvals" },
   ];
 
