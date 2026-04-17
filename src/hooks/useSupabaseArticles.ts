@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import type { NewsArticle } from "@/types/crypto";
 
 interface SupabaseArticle {
@@ -34,11 +34,6 @@ export function useSupabaseArticles() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchArticles = useCallback(async () => {
-    if (!isSupabaseConfigured) {
-      setLoading(false);
-      setError("Supabase env vars missing. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env, then restart.");
-      return;
-    }
     try {
       setLoading(true);
       const { data, error: dbError } = await supabase
@@ -70,20 +65,45 @@ export function useSupabaseArticles() {
       category: string;
       feature_image: string;
     }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const payload = { ...article, author_id: userData.user?.id ?? null };
       const { data, error } = await supabase
         .from("articles")
-        .insert([article])
+        .insert([payload])
         .select()
         .single();
 
       if (error) throw error;
+      if (data) setArticles((prev) => [mapToNewsArticle(data), ...prev]);
+      return data;
+    },
+    []
+  );
+
+  const updateArticle = useCallback(
+    async (id: string, patch: Partial<{
+      title: string; content: string; excerpt: string; category: string; feature_image: string;
+    }>) => {
+      const { data, error } = await supabase
+        .from("articles")
+        .update(patch)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
       if (data) {
-        setArticles((prev) => [mapToNewsArticle(data), ...prev]);
+        setArticles((prev) => prev.map((a) => (a.id === id ? mapToNewsArticle(data) : a)));
       }
       return data;
     },
     []
   );
 
-  return { articles, loading, error, refetch: fetchArticles, insertArticle };
+  const deleteArticle = useCallback(async (id: string) => {
+    const { error } = await supabase.from("articles").delete().eq("id", id);
+    if (error) throw error;
+    setArticles((prev) => prev.filter((a) => a.id !== id));
+  }, []);
+
+  return { articles, loading, error, refetch: fetchArticles, insertArticle, updateArticle, deleteArticle };
 }
