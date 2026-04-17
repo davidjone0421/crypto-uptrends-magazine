@@ -52,7 +52,6 @@ export function Footer() {
             <h4 className="font-heading font-semibold text-foreground mb-3 text-sm">Quick Links</h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/market-data" className="hover:text-primary transition-colors">Market Data</Link></li>
-              <li><Link to="/portfolio-tracker" className="hover:text-primary transition-colors">Portfolio Tracker</Link></li>
               <li><Link to="/exchanges" className="hover:text-primary transition-colors">Exchanges</Link></li>
               <li><Link to="/learn-crypto" className="hover:text-primary transition-colors">Learn Crypto</Link></li>
             </ul>
