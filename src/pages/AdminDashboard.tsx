@@ -202,7 +202,7 @@ function CreatePostView({ onPublish, disabled }: { onPublish: (a: any) => Promis
           <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write article content..." rows={8} />
         </div>
         <Button type="submit" className="w-full sm:w-auto" disabled={submitting || disabled}>
-          <FilePlus className="w-4 h-4 mr-2" /> {submitting ? "Publishing..." : disabled ? "Admin role required" : "Publish Article"}
+          <FilePlus className="w-4 h-4 mr-2" /> {submitting ? "Publishing..." : disabled ? "Insufficient permissions" : "Publish Article"}
         </Button>
       </form>
     </div>
