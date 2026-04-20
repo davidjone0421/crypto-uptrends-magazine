@@ -6,6 +6,8 @@ interface AuthState {
   isReady: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isEditor: boolean;
+  canManageContent: boolean;
   user: User | null;
   session: Session | null;
   login: (email: string, password: string) => Promise<{ error: string | null }>;
