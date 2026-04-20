@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import {
   LayoutDashboard, FilePlus, FileCheck, LogOut, TrendingUp,
-  FileText, Eye, Clock, Check, X, Users, Settings,
+  FileText, Eye, Clock, Check, X, Users, Settings, Shield,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSupabaseArticles } from "@/hooks/useSupabaseArticles";
 import { ImageUploader } from "@/components/ImageUploader";
 import { ManagePostsView } from "@/components/admin/ManagePostsView";
+import { TeamMembersView } from "@/components/admin/TeamMembersView";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,10 +17,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-type View = "dashboard" | "create" | "manage" | "approvals";
+type View = "dashboard" | "create" | "manage" | "approvals" | "team";
 
 export default function AdminDashboard() {
-  const { isAuthenticated, isAdmin, isReady, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, isEditor, canManageContent, isReady, user, logout } = useAuth();
   const [view, setView] = useState<View>("dashboard");
   const { articles, insertArticle, updateArticle, deleteArticle, error: articlesError, loading } = useSupabaseArticles();
   const navigate = useNavigate();
@@ -30,11 +31,32 @@ export default function AdminDashboard() {
   }
   if (!isAuthenticated) return <Navigate to="/admin-login" replace />;
 
+  if (!canManageContent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="bg-card border border-border rounded-xl p-8 max-w-md text-center">
+          <Shield className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <h1 className="text-xl font-bold mb-2">Access Denied</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            Your account does not have admin or editor privileges. Contact an administrator to request access.
+          </p>
+          <div className="flex gap-2 justify-center">
+            <Button variant="outline" onClick={() => navigate("/")}>Back to Home</Button>
+            <Button variant="destructive" onClick={async () => { await logout(); navigate("/admin-login"); }}>Sign Out</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const roleLabel = isAdmin ? "Admin" : isEditor ? "Editor" : "User";
+
   const sidebarItems: { label: string; icon: typeof LayoutDashboard; view: View }[] = [
     { label: "Dashboard Overview", icon: LayoutDashboard, view: "dashboard" },
     { label: "Create Post", icon: FilePlus, view: "create" },
     { label: "Manage Posts", icon: Settings, view: "manage" },
     { label: "Pending Approvals", icon: FileCheck, view: "approvals" },
+    ...(isAdmin ? [{ label: "Team Members", icon: Shield, view: "team" as View }] : []),
   ];
 
   return (
