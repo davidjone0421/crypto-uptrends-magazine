@@ -34,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => { void checkAdmin(newSession.user.id); }, 0);
       } else {
         setIsAdmin(false);
+        setIsEditor(false);
       }
     });
 
