@@ -53,7 +53,7 @@ export function HeroSection({ articles, loading }: Props) {
                 {featured.category}
               </span>
               <h1 className="text-2xl lg:text-3xl font-bold leading-tight mb-2 group-hover:text-primary transition-colors">
-                {featured.title}
+                [Test V-1] {featured.title}
               </h1>
               <div className="flex items-center gap-3 text-sm text-white/70">
                 <span>{featured.source}</span>
