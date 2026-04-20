@@ -87,23 +87,18 @@ export default function AdminDashboard() {
       </aside>
 
       <main className="flex-1 p-8 overflow-auto">
-        {!isAdmin && (
-          <div className="mb-6 p-4 rounded-lg bg-amber-100 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-sm">
-            <strong>Read-only:</strong> your account does not have the <code>admin</code> role. Publishing will be blocked by RLS. Grant yourself admin in Supabase: <code>insert into user_roles (user_id, role) values ('{user?.id}', 'admin');</code>
-          </div>
-        )}
         {articlesError && (
           <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
             <strong>Database error:</strong> {articlesError}
           </div>
         )}
         {view === "dashboard" && <DashboardView articleCount={articles.length} loading={loading} />}
-        {view === "create" && <CreatePostView onPublish={insertArticle} disabled={!isAdmin} />}
+        {view === "create" && <CreatePostView onPublish={insertArticle} disabled={!canManageContent} />}
         {view === "manage" && (
           <ManagePostsView
             articles={articles}
             loading={loading}
-            isAdmin={isAdmin}
+            isAdmin={canManageContent}
             onUpdate={updateArticle}
             onDelete={deleteArticle}
           />
@@ -111,6 +106,7 @@ export default function AdminDashboard() {
         {view === "approvals" && (
           <ApprovalsView articles={articles.slice(0, 8)} status={approvalStatus} onAction={(id, action) => setApprovalStatus((prev) => ({ ...prev, [id]: action }))} />
         )}
+        {view === "team" && isAdmin && <TeamMembersView />}
       </main>
     </div>
   );
