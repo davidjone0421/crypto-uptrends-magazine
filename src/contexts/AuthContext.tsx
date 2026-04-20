@@ -6,6 +6,8 @@ interface AuthState {
   isReady: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isEditor: boolean;
+  canManageContent: boolean;
   user: User | null;
   session: Session | null;
   login: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -19,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isEditor, setIsEditor] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -31,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => { void checkAdmin(newSession.user.id); }, 0);
       } else {
         setIsAdmin(false);
+        setIsEditor(false);
       }
     });
 
@@ -50,12 +54,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAdmin = async (userId: string) => {
     try {
-      const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-      if (error) throw error;
-      setIsAdmin(!!data);
-    } catch (err) {
-      console.error("Role check failed:", err);
+      const [adminRes, editorRes] = await Promise.all([
+        supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
+        supabase.rpc("has_role", { _user_id: userId, _role: "editor" }),
+      ]);
+      setIsAdmin(!!adminRes.data);
+      setIsEditor(!!editorRes.data);
+    } catch {
       setIsAdmin(false);
+      setIsEditor(false);
     }
   };
 
@@ -78,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ isReady, isAuthenticated: !!user, isAdmin, user, session, login, signUp, logout }}>
+    <AuthContext.Provider value={{ isReady, isAuthenticated: !!user, isAdmin, isEditor, canManageContent: isAdmin || isEditor, user, session, login, signUp, logout }}>
       {children}
     </AuthContext.Provider>
   );

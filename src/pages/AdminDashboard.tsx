@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import {
   LayoutDashboard, FilePlus, FileCheck, LogOut, TrendingUp,
-  FileText, Eye, Clock, Check, X, Users, Settings,
+  FileText, Eye, Clock, Check, X, Users, Settings, Shield,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSupabaseArticles } from "@/hooks/useSupabaseArticles";
 import { ImageUploader } from "@/components/ImageUploader";
 import { ManagePostsView } from "@/components/admin/ManagePostsView";
+import { TeamMembersView } from "@/components/admin/TeamMembersView";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,10 +17,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-type View = "dashboard" | "create" | "manage" | "approvals";
+type View = "dashboard" | "create" | "manage" | "approvals" | "team";
 
 export default function AdminDashboard() {
-  const { isAuthenticated, isAdmin, isReady, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, isEditor, canManageContent, isReady, user, logout } = useAuth();
   const [view, setView] = useState<View>("dashboard");
   const { articles, insertArticle, updateArticle, deleteArticle, error: articlesError, loading } = useSupabaseArticles();
   const navigate = useNavigate();
@@ -30,11 +31,32 @@ export default function AdminDashboard() {
   }
   if (!isAuthenticated) return <Navigate to="/admin-login" replace />;
 
+  if (!canManageContent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="bg-card border border-border rounded-xl p-8 max-w-md text-center">
+          <Shield className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <h1 className="text-xl font-bold mb-2">Access Denied</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            Your account does not have admin or editor privileges. Contact an administrator to request access.
+          </p>
+          <div className="flex gap-2 justify-center">
+            <Button variant="outline" onClick={() => navigate("/")}>Back to Home</Button>
+            <Button variant="destructive" onClick={async () => { await logout(); navigate("/admin-login"); }}>Sign Out</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const roleLabel = isAdmin ? "Admin" : isEditor ? "Editor" : "User";
+
   const sidebarItems: { label: string; icon: typeof LayoutDashboard; view: View }[] = [
     { label: "Dashboard Overview", icon: LayoutDashboard, view: "dashboard" },
     { label: "Create Post", icon: FilePlus, view: "create" },
     { label: "Manage Posts", icon: Settings, view: "manage" },
     { label: "Pending Approvals", icon: FileCheck, view: "approvals" },
+    ...(isAdmin ? [{ label: "Team Members", icon: Shield, view: "team" as View }] : []),
   ];
 
   return (
@@ -56,7 +78,7 @@ export default function AdminDashboard() {
         </nav>
         <div className="p-3 border-t border-border">
           <div className="text-xs text-muted-foreground mb-2 px-3 truncate">
-            {user?.email} {isAdmin ? "(Admin)" : "(User)"}
+            {user?.email} ({roleLabel})
           </div>
           <button onClick={async () => { await logout(); navigate("/admin-login"); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
             <LogOut className="w-4 h-4" />Sign Out
@@ -65,23 +87,18 @@ export default function AdminDashboard() {
       </aside>
 
       <main className="flex-1 p-8 overflow-auto">
-        {!isAdmin && (
-          <div className="mb-6 p-4 rounded-lg bg-amber-100 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-sm">
-            <strong>Read-only:</strong> your account does not have the <code>admin</code> role. Publishing will be blocked by RLS. Grant yourself admin in Supabase: <code>insert into user_roles (user_id, role) values ('{user?.id}', 'admin');</code>
-          </div>
-        )}
         {articlesError && (
           <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
             <strong>Database error:</strong> {articlesError}
           </div>
         )}
         {view === "dashboard" && <DashboardView articleCount={articles.length} loading={loading} />}
-        {view === "create" && <CreatePostView onPublish={insertArticle} disabled={!isAdmin} />}
+        {view === "create" && <CreatePostView onPublish={insertArticle} disabled={!canManageContent} />}
         {view === "manage" && (
           <ManagePostsView
             articles={articles}
             loading={loading}
-            isAdmin={isAdmin}
+            isAdmin={canManageContent}
             onUpdate={updateArticle}
             onDelete={deleteArticle}
           />
@@ -89,6 +106,7 @@ export default function AdminDashboard() {
         {view === "approvals" && (
           <ApprovalsView articles={articles.slice(0, 8)} status={approvalStatus} onAction={(id, action) => setApprovalStatus((prev) => ({ ...prev, [id]: action }))} />
         )}
+        {view === "team" && isAdmin && <TeamMembersView />}
       </main>
     </div>
   );
@@ -184,7 +202,7 @@ function CreatePostView({ onPublish, disabled }: { onPublish: (a: any) => Promis
           <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write article content..." rows={8} />
         </div>
         <Button type="submit" className="w-full sm:w-auto" disabled={submitting || disabled}>
-          <FilePlus className="w-4 h-4 mr-2" /> {submitting ? "Publishing..." : disabled ? "Admin role required" : "Publish Article"}
+          <FilePlus className="w-4 h-4 mr-2" /> {submitting ? "Publishing..." : disabled ? "Insufficient permissions" : "Publish Article"}
         </Button>
       </form>
     </div>
