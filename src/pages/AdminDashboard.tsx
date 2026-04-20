@@ -78,7 +78,7 @@ export default function AdminDashboard() {
         </nav>
         <div className="p-3 border-t border-border">
           <div className="text-xs text-muted-foreground mb-2 px-3 truncate">
-            {user?.email} {isAdmin ? "(Admin)" : "(User)"}
+            {user?.email} ({roleLabel})
           </div>
           <button onClick={async () => { await logout(); navigate("/admin-login"); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
             <LogOut className="w-4 h-4" />Sign Out
