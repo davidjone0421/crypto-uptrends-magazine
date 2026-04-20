@@ -53,12 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAdmin = async (userId: string) => {
     try {
-      const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-      if (error) throw error;
-      setIsAdmin(!!data);
-    } catch (err) {
-      console.error("Role check failed:", err);
+      const [adminRes, editorRes] = await Promise.all([
+        supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
+        supabase.rpc("has_role", { _user_id: userId, _role: "editor" }),
+      ]);
+      setIsAdmin(!!adminRes.data);
+      setIsEditor(!!editorRes.data);
+    } catch {
       setIsAdmin(false);
+      setIsEditor(false);
     }
   };
 
